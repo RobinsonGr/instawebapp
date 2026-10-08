@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { LatLngLiteral } from 'leaflet'
-import { LocateButton } from './components/LocateButton'
+import { MapHint } from './components/MapHint'
 import { StoreMap } from './components/StoreMap'
 import { StorePanel } from './components/StorePanel'
 import { useClosestStore } from './hooks/useClosestStore'
+import { useMapHint } from './hooks/useMapHint'
 import { toInput, type CoordinateInput } from './lib/coordinates'
 import './App.css'
 
@@ -11,7 +12,9 @@ function App() {
   const [selected, setSelected] = useState<LatLngLiteral | null>(null)
   const [focus, setFocus] = useState<LatLngLiteral | null>(null)
   const [input, setInput] = useState<CoordinateInput>({ lat: '', lng: '' })
-  const { state, lookup } = useClosestStore()
+  const hint = useMapHint()
+  const { state, lookup } = useClosestStore(hint.dismiss)
+  const panelRef = useRef<HTMLElement>(null)
 
   const search = useCallback(
     (coords: LatLngLiteral, center: boolean) => {
@@ -28,6 +31,10 @@ function App() {
     (coords: LatLngLiteral) => search(coords, false),
     [search],
   )
+  const handleDrag = useCallback(
+    (coords: LatLngLiteral) => setInput(toInput(coords)),
+    [],
+  )
   const handleSearch = useCallback(
     (coords: LatLngLiteral) => search(coords, true),
     [search],
@@ -36,22 +43,28 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>InstaStore</h1>
-        <LocateButton onLocate={handleSearch} />
+        <h1 className="app-header__title">InstaStore</h1>
+        <p className="app-header__subtitle">Find the closest available store</p>
       </header>
       <main className="app-main">
-        <StoreMap
-          selected={selected}
-          store={state.status === 'success' ? state.store : null}
-          focus={focus}
-          onSelect={handleMapClick}
-        />
+        {/* Panel first so keyboard users reach the search before the map. */}
         <StorePanel
+          ref={panelRef}
           state={state}
+          selected={selected}
           input={input}
           onInputChange={setInput}
           onSearch={handleSearch}
         />
+        <StoreMap
+          selected={selected}
+          store={state.status === 'success' ? state.store : null}
+          focus={focus}
+          overlayRef={panelRef}
+          onSelect={handleMapClick}
+          onDrag={handleDrag}
+        />
+        {hint.visible && <MapHint onDismiss={hint.dismiss} />}
       </main>
     </div>
   )

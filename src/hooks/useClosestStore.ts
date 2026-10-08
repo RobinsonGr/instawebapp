@@ -8,9 +8,14 @@ export type ClosestStoreState =
   | { status: 'not-found' }
   | { status: 'error'; message: string }
 
-export function useClosestStore() {
+export function useClosestStore(onSuccess?: (store: Store) => void) {
   const [state, setState] = useState<ClosestStoreState>({ status: 'idle' })
   const controllerRef = useRef<AbortController | null>(null)
+  // Kept in a ref so lookup stays stable when the caller passes a new function.
+  const onSuccessRef = useRef(onSuccess)
+  useEffect(() => {
+    onSuccessRef.current = onSuccess
+  })
 
   useEffect(() => () => controllerRef.current?.abort(), [])
 
@@ -24,6 +29,7 @@ export function useClosestStore() {
     try {
       const store = await getClosestStore(lat, lng, controller.signal)
       setState({ status: 'success', store })
+      onSuccessRef.current?.(store)
     } catch (err) {
       if (controller.signal.aborted) return
       if (err instanceof StoreApiError && err.code === 'NO_STORE_NEARBY') {

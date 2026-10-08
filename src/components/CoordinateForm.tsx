@@ -6,14 +6,19 @@ import {
   type CoordinateInput,
 } from '../lib/coordinates'
 
+const HINT_ID = 'coord-hint'
+
 type CoordinateFormProps = {
   value: CoordinateInput
+  /** A request is in flight. */
+  busy: boolean
   onChange: (value: CoordinateInput) => void
   onSubmit: (coords: LatLngLiteral) => void
 }
 
 export function CoordinateForm({
   value,
+  busy,
   onChange,
   onSubmit,
 }: CoordinateFormProps) {
@@ -51,8 +56,16 @@ export function CoordinateForm({
         error={errors.lng}
         onChange={(lng) => onChange({ ...value, lng })}
       />
-      <button type="submit" className="button coord-form__submit">
-        Find closest store
+      <p id={HINT_ID} className="coord-form__hint">
+        Latitude −90 to 90 · Longitude −180 to 180
+      </p>
+      <button
+        type="submit"
+        className="button button--primary coord-form__submit"
+        disabled={busy}
+      >
+        {busy && <span className="spinner" aria-hidden="true" />}
+        {busy ? 'Searching…' : 'Find closest store'}
       </button>
     </form>
   )
@@ -81,7 +94,7 @@ function Field({ id, label, placeholder, value, error, onChange }: FieldProps) {
         placeholder={placeholder}
         value={value}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={error ? `${errorId} ${HINT_ID}` : HINT_ID}
         onChange={(e) => onChange(e.target.value)}
       />
       {error && (
