@@ -35,7 +35,11 @@ type StoreMapProps = {
 
 function ClickHandler({ onSelect }: Pick<StoreMapProps, 'onSelect'>) {
   useMapEvents({
-    click: (e) => onSelect({ lat: e.latlng.lat, lng: e.latlng.lng }),
+    click: (e) => {
+      // Clicks on a repeated world copy report lng beyond ±180, which the API rejects.
+      const { lat, lng } = e.latlng.wrap()
+      onSelect({ lat, lng })
+    },
   })
   return null
 }

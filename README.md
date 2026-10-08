@@ -32,6 +32,8 @@ With `VITE_USE_MOCK=true` (the default in `.env.example`) the app works without 
 
 Vite reads these at build time, so restart the dev server after changing them.
 
+In development the app calls `/api/...` on the Vite dev server, which proxies to `VITE_API_URL` (see `vite.config.ts`). This avoids CORS, since the API doesn't send CORS headers. A production build calls `VITE_API_URL` directly, so the API must either allow the app's origin or be served from the same origin.
+
 ## Scripts
 
 | Command                | What it does                          |

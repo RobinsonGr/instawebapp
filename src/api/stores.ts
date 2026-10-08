@@ -18,7 +18,8 @@ export class StoreApiError extends Error {
   }
 }
 
-const API_URL = import.meta.env.VITE_API_URL
+// In dev, go through the Vite proxy (see vite.config.ts) to avoid CORS.
+const API_URL = import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_URL
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const MOCK_DELAY_MS = 600
 
@@ -37,7 +38,10 @@ async function fetchClosestStore(
   lng: number,
   signal?: AbortSignal,
 ): Promise<Store> {
-  const params = new URLSearchParams({ lat: String(lat), lng: String(lng) })
+  const params = new URLSearchParams({
+    lat: toDecimal(lat),
+    lng: toDecimal(lng),
+  })
   const res = await fetch(`${API_URL}/stores/closest?${params}`, { signal })
 
   if (res.status === 400) {
@@ -55,6 +59,12 @@ async function fetchClosestStore(
     throw new StoreApiError('UNKNOWN', 'Unexpected response shape.')
   }
   return body
+}
+
+// The API only accepts plain decimals; String() can produce exponents like 1e-7.
+// Six decimal places is ~0.1 m, well below map click precision.
+function toDecimal(n: number): string {
+  return n.toFixed(6)
 }
 
 function isStore(value: unknown): value is Store {
