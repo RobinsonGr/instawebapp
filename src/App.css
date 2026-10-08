@@ -17,6 +17,7 @@
 }
 
 .app-main {
+  position: relative;
   flex: 1;
   min-height: 0;
 }
@@ -24,4 +25,24 @@
 .store-map {
   height: 100%;
   width: 100%;
+}
+
+.store-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  /* Above Leaflet panes and controls. */
+  z-index: 1000;
+  max-width: calc(100% - 24px);
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.store-status--error {
+  border-color: #d93025;
+  color: #d93025;
 }
