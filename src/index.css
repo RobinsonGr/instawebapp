@@ -2,6 +2,12 @@
   --text: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
+  --text-muted: #6b6375;
+  --error: #c5221f;
+  --open: #166534;
+  --open-bg: #dcfce7;
+  --closed: #374151;
+  --closed-bg: #e5e7eb;
 
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -17,6 +23,12 @@
     --text: #f3f4f6;
     --bg: #16171d;
     --border: #2e303a;
+    --text-muted: #9ca3af;
+    --error: #f28b82;
+    --open: #86efac;
+    --open-bg: #14532d;
+    --closed: #d1d5db;
+    --closed-bg: #374151;
   }
 }
 

@@ -17,32 +17,126 @@
 }
 
 .app-main {
-  position: relative;
+  display: flex;
   flex: 1;
   min-height: 0;
 }
 
 .store-map {
+  flex: 1;
+  min-width: 0;
   height: 100%;
-  width: 100%;
 }
 
-.store-status {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  /* Above Leaflet panes and controls. */
-  z-index: 1000;
-  max-width: calc(100% - 24px);
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+.store-panel {
+  flex: none;
+  width: 320px;
+  padding: 16px;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
   background: var(--bg);
+}
+
+.store-panel p {
+  margin: 0;
+}
+
+.store-panel__message {
+  color: var(--text-muted);
+}
+
+.store-panel__message--error {
+  color: var(--error);
+}
+
+.store-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.store-panel__title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text);
+}
+
+.store-panel__message--error .store-panel__title {
+  color: var(--error);
+}
+
+.store-panel__coords {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 12px 0 0;
   font-size: 14px;
 }
 
-.store-status--error {
-  border-color: #d93025;
-  color: #d93025;
+.store-panel__coords dt {
+  color: var(--text-muted);
+}
+
+.store-panel__coords dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge--open {
+  background: var(--open-bg);
+  color: var(--open);
+}
+
+.badge--closed {
+  background: var(--closed-bg);
+  color: var(--closed);
+}
+
+/* Teardrop pin for the store; the clicked point keeps Leaflet's default marker. */
+.store-marker span {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
+.store-marker--open span {
+  background: #16a34a;
+}
+
+.store-marker--closed span {
+  background: #6b7280;
+}
+
+@media (max-width: 640px) {
+  .app-main {
+    flex-direction: column;
+  }
+
+  .store-map {
+    height: auto;
+    min-height: 0;
+  }
+
+  .store-panel {
+    width: auto;
+    max-height: 40vh;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 12px rgb(0 0 0 / 0.12);
+  }
 }

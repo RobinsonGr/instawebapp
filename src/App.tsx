@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { LatLngLiteral } from 'leaflet'
 import { StoreMap } from './components/StoreMap'
-import { StoreStatus } from './components/StoreStatus'
+import { StorePanel } from './components/StorePanel'
 import { useClosestStore } from './hooks/useClosestStore'
 import './App.css'
 
@@ -20,10 +20,12 @@ function App() {
         <h1>InstaStore</h1>
       </header>
       <main className="app-main">
-        <StoreMap selected={selected} onSelect={handleSelect} />
-        <div aria-live="polite">
-          <StoreStatus state={state} />
-        </div>
+        <StoreMap
+          selected={selected}
+          store={state.status === 'success' ? state.store : null}
+          onSelect={handleSelect}
+        />
+        <StorePanel state={state} />
       </main>
     </div>
   )

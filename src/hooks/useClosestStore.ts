@@ -5,6 +5,7 @@ export type ClosestStoreState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'success'; store: Store }
+  | { status: 'not-found' }
   | { status: 'error'; message: string }
 
 export function useClosestStore() {
@@ -25,6 +26,10 @@ export function useClosestStore() {
       setState({ status: 'success', store })
     } catch (err) {
       if (controller.signal.aborted) return
+      if (err instanceof StoreApiError && err.code === 'NO_STORE_NEARBY') {
+        setState({ status: 'not-found' })
+        return
+      }
       setState({ status: 'error', message: toMessage(err) })
     }
   }, [])
@@ -38,7 +43,6 @@ function toMessage(err: unknown): string {
       case 'INVALID_COORDINATES':
         return 'Those coordinates are not valid. Try another point.'
       case 'NO_STORE_NEARBY':
-        return 'No store found near this point.'
       case 'UNKNOWN':
         return 'Something went wrong. Please try again.'
     }
