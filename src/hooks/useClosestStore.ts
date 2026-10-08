@@ -41,11 +41,13 @@ function toMessage(err: unknown): string {
   if (err instanceof StoreApiError) {
     switch (err.code) {
       case 'INVALID_COORDINATES':
-        return 'Those coordinates are not valid. Try another point.'
+        return err.message
+      case 'UNREACHABLE':
+        return "Can't reach the API. It may be waking up, try again in a few seconds."
       case 'NO_STORE_NEARBY':
       case 'UNKNOWN':
-        return 'Something went wrong. Please try again.'
+        break
     }
   }
-  return 'Could not reach the server. Please try again.'
+  return 'Something went wrong. Please try again.'
 }

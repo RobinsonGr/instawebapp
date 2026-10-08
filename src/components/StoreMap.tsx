@@ -14,6 +14,9 @@ import '../lib/leafletIcon'
 
 const MEDELLIN: LatLngLiteral = { lat: 6.2442, lng: -75.5812 }
 const DEFAULT_ZOOM = 13
+// Roughly street level; fitting two very close points shouldn't zoom further.
+const MAX_FIT_ZOOM = 16
+const FIT_PADDING: [number, number] = [48, 48]
 
 const storeIcon = (isOpen: boolean) =>
   L.divIcon({
@@ -28,7 +31,7 @@ const CLOSED_STORE_ICON = storeIcon(false)
 type StoreMapProps = {
   selected: LatLngLiteral | null
   store: Store | null
-  /** A new object here pans the map to it, e.g. after geolocation. */
+  /** A new object here pans the map to it, e.g. after a typed search. */
   focus: LatLngLiteral | null
   onSelect: (coords: LatLngLiteral) => void
 }
@@ -64,6 +67,22 @@ function FocusHandler({ focus }: Pick<StoreMapProps, 'focus'>) {
   return null
 }
 
+// Frame the selected point and its store whenever a new result arrives.
+function FitHandler({
+  selected,
+  store,
+}: Pick<StoreMapProps, 'selected' | 'store'>) {
+  const map = useMap()
+  useEffect(() => {
+    if (!selected || !store) return
+    map.fitBounds(L.latLngBounds([selected, store.coordinates]), {
+      padding: FIT_PADDING,
+      maxZoom: MAX_FIT_ZOOM,
+    })
+  }, [map, selected, store])
+  return null
+}
+
 export function StoreMap({ selected, store, focus, onSelect }: StoreMapProps) {
   return (
     <MapContainer center={MEDELLIN} zoom={DEFAULT_ZOOM} className="store-map">
@@ -74,6 +93,7 @@ export function StoreMap({ selected, store, focus, onSelect }: StoreMapProps) {
       <ClickHandler onSelect={onSelect} />
       <ResizeHandler />
       <FocusHandler focus={focus} />
+      <FitHandler selected={selected} store={store} />
       {selected && <Marker position={selected} />}
       {selected && store && (
         <>

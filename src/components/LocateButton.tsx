@@ -13,7 +13,7 @@ export function LocateButton({ onLocate }: LocateButtonProps) {
     <div className="locate">
       <button
         type="button"
-        className="locate__button"
+        className="button"
         onClick={locate}
         disabled={locating}
       >

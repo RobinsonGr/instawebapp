@@ -6,7 +6,7 @@ export type Store = {
 }
 
 export type StoreApiErrorCode =
-  'INVALID_COORDINATES' | 'NO_STORE_NEARBY' | 'UNKNOWN'
+  'INVALID_COORDINATES' | 'NO_STORE_NEARBY' | 'UNREACHABLE' | 'UNKNOWN'
 
 export class StoreApiError extends Error {
   readonly code: StoreApiErrorCode
@@ -42,13 +42,27 @@ async function fetchClosestStore(
     lat: toDecimal(lat),
     lng: toDecimal(lng),
   })
-  const res = await fetch(`${API_URL}/stores/closest?${params}`, { signal })
+
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}/stores/closest?${params}`, { signal })
+  } catch (err) {
+    if (signal?.aborted) throw err
+    throw new StoreApiError('UNREACHABLE', 'Network request failed.')
+  }
 
   if (res.status === 400) {
-    throw new StoreApiError('INVALID_COORDINATES', 'Invalid coordinates.')
+    throw new StoreApiError(
+      'INVALID_COORDINATES',
+      await readBadRequestMessage(res),
+    )
   }
   if (res.status === 404) {
     throw new StoreApiError('NO_STORE_NEARBY', 'No store nearby.')
+  }
+  // 502–504 come from a gateway (or the Vite dev proxy) when the API is down.
+  if (res.status >= 502 && res.status <= 504) {
+    throw new StoreApiError('UNREACHABLE', `API unavailable (${res.status}).`)
   }
   if (!res.ok) {
     throw new StoreApiError('UNKNOWN', `Unexpected response (${res.status}).`)
@@ -59,6 +73,26 @@ async function fetchClosestStore(
     throw new StoreApiError('UNKNOWN', 'Unexpected response shape.')
   }
   return body
+}
+
+// 400 body: { message, errors?: [{ field, message }] }. Prefer the field messages.
+async function readBadRequestMessage(res: Response): Promise<string> {
+  const fallback = 'Invalid coordinates.'
+  try {
+    const body = (await res.json()) as {
+      message?: unknown
+      errors?: { message?: unknown }[]
+    }
+    const fieldMessages = Array.isArray(body.errors)
+      ? body.errors
+          .map((e) => e.message)
+          .filter((m): m is string => typeof m === 'string')
+      : []
+    if (fieldMessages.length > 0) return fieldMessages.join('. ')
+    return typeof body.message === 'string' ? body.message : fallback
+  } catch {
+    return fallback
+  }
 }
 
 // The API only accepts plain decimals; String() can produce exponents like 1e-7.
@@ -91,7 +125,11 @@ function getClosestStoreMock(
     const timer = setTimeout(() => {
       signal?.removeEventListener('abort', onAbort)
       if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-        reject(new StoreApiError('INVALID_COORDINATES', 'Invalid coordinates.'))
+        const message =
+          Math.abs(lat) > 90
+            ? 'lat must be between -90 and 90'
+            : 'lng must be between -180 and 180'
+        reject(new StoreApiError('INVALID_COORDINATES', message))
         return
       }
       // Offset by up to ~1 km so the store lands near, not on, the clicked point.

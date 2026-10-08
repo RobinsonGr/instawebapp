@@ -1,23 +1,48 @@
+import type { LatLngLiteral } from 'leaflet'
 import type { ClosestStoreState } from '../hooks/useClosestStore'
+import type { CoordinateInput } from '../lib/coordinates'
+import { CoordinateForm } from './CoordinateForm'
+import { PresetButtons } from './PresetButtons'
 
 type StorePanelProps = {
   state: ClosestStoreState
+  input: CoordinateInput
+  onInputChange: (input: CoordinateInput) => void
+  onSearch: (coords: LatLngLiteral) => void
 }
 
-export function StorePanel({ state }: StorePanelProps) {
+export function StorePanel({
+  state,
+  input,
+  onInputChange,
+  onSearch,
+}: StorePanelProps) {
   return (
-    <aside className="store-panel" aria-live="polite">
-      <StorePanelContent state={state} />
+    <aside className="store-panel">
+      <section className="store-panel__search" aria-label="Search">
+        <CoordinateForm
+          value={input}
+          onChange={onInputChange}
+          onSubmit={onSearch}
+        />
+        <PresetButtons onSelect={onSearch} />
+      </section>
+      <section className="store-panel__result" aria-live="polite">
+        <Result state={state} onSearch={onSearch} />
+      </section>
     </aside>
   )
 }
 
-function StorePanelContent({ state }: StorePanelProps) {
+type ResultProps = Pick<StorePanelProps, 'state' | 'onSearch'>
+
+function Result({ state, onSearch }: ResultProps) {
   switch (state.status) {
     case 'idle':
       return (
         <p className="store-panel__message">
-          Click the map to find the closest store.
+          Click the map, enter coordinates, or use your location to find the
+          closest store.
         </p>
       )
     case 'loading':
@@ -25,21 +50,21 @@ function StorePanelContent({ state }: StorePanelProps) {
     case 'not-found':
       return (
         <div className="store-panel__message">
-          <p className="store-panel__title">No store nearby</p>
           <p>
-            There is no store close to this point. Try clicking somewhere else.
+            No stores within 10 km of this point. Demo data covers Medellín and
+            Bogotá.
           </p>
+          <PresetButtons onSelect={onSearch} />
         </div>
       )
     case 'error':
       return (
-        <div
+        <p
           className="store-panel__message store-panel__message--error"
           role="alert"
         >
-          <p className="store-panel__title">Something went wrong</p>
-          <p>{state.message}</p>
-        </div>
+          {state.message}
+        </p>
       )
     case 'success': {
       const { storeName, isOpen, coordinates } = state.store
