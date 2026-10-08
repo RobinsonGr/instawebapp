@@ -8,6 +8,7 @@
   --open-bg: #dcfce7;
   --closed: #374151;
   --closed-bg: #e5e7eb;
+  --accent: #2563eb;
 
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
@@ -29,6 +30,7 @@
     --open-bg: #14532d;
     --closed: #d1d5db;
     --closed-bg: #374151;
+    --accent: #3b82f6;
   }
 }
 

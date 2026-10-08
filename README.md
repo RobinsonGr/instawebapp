@@ -1,73 +1,61 @@
-# React + TypeScript + Vite
+# InstaStore Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small demo UI for the InstaStore API. Click anywhere on the map (or use your current location) to find the closest store, see whether it's open, and get its coordinates.
 
-Currently, two official plugins are available:
+![InstaStore screenshot](docs/screenshot.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+<!-- TODO: add a screenshot at docs/screenshot.png -->
 
-## React Compiler
+## Requirements
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 20.19+ or 22.12+
+- npm
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Then open the URL Vite prints (usually http://localhost:5173).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+With `VITE_USE_MOCK=true` (the default in `.env.example`) the app works without a backend. Set it to `false` and point `VITE_API_URL` at a running InstaStore API to use real data.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Environment variables
+
+| Variable        | Description                                                                   | Example                 |
+| --------------- | ----------------------------------------------------------------------------- | ----------------------- |
+| `VITE_API_URL`  | Base URL of the InstaStore API.                                               | `http://localhost:3000` |
+| `VITE_USE_MOCK` | `true` returns a fake store near the chosen point instead of calling the API. | `true`                  |
+
+Vite reads these at build time, so restart the dev server after changing them.
+
+## Scripts
+
+| Command                | What it does                          |
+| ---------------------- | ------------------------------------- |
+| `npm run dev`          | Start the dev server with hot reload. |
+| `npm run build`        | Type-check and build to `dist/`.      |
+| `npm run preview`      | Serve the production build locally.   |
+| `npm run lint`         | Run ESLint.                           |
+| `npm run format`       | Format the code with Prettier.        |
+| `npm run format:check` | Check formatting without writing.     |
+
+## API
+
+The app calls one endpoint:
+
 ```
+GET {VITE_API_URL}/stores/closest?lat={number}&lng={number}
+```
+
+- `200` → `{ "storeId": string, "storeName": string, "isOpen": boolean, "coordinates": { "lat": number, "lng": number } }`
+- `400` → invalid coordinates
+- `404` → no store nearby
+
+## Notes
+
+- "Use my location" needs a secure context: `localhost` or HTTPS. If permission is denied, the app explains why and you can still click the map.
+- Map tiles come from OpenStreetMap.

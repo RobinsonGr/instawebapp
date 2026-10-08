@@ -28,6 +28,8 @@ const CLOSED_STORE_ICON = storeIcon(false)
 type StoreMapProps = {
   selected: LatLngLiteral | null
   store: Store | null
+  /** A new object here pans the map to it, e.g. after geolocation. */
+  focus: LatLngLiteral | null
   onSelect: (coords: LatLngLiteral) => void
 }
 
@@ -50,7 +52,15 @@ function ResizeHandler() {
   return null
 }
 
-export function StoreMap({ selected, store, onSelect }: StoreMapProps) {
+function FocusHandler({ focus }: Pick<StoreMapProps, 'focus'>) {
+  const map = useMap()
+  useEffect(() => {
+    if (focus) map.flyTo(focus, Math.max(map.getZoom(), DEFAULT_ZOOM))
+  }, [map, focus])
+  return null
+}
+
+export function StoreMap({ selected, store, focus, onSelect }: StoreMapProps) {
   return (
     <MapContainer center={MEDELLIN} zoom={DEFAULT_ZOOM} className="store-map">
       <TileLayer
@@ -59,6 +69,7 @@ export function StoreMap({ selected, store, onSelect }: StoreMapProps) {
       />
       <ClickHandler onSelect={onSelect} />
       <ResizeHandler />
+      <FocusHandler focus={focus} />
       {selected && <Marker position={selected} />}
       {selected && store && (
         <>
