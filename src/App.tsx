@@ -3,6 +3,7 @@ import type { LatLngLiteral } from 'leaflet'
 import { MapHint } from './components/MapHint'
 import { StoreMap } from './components/StoreMap'
 import { StorePanel } from './components/StorePanel'
+import { useApiStatus } from './hooks/useApiStatus'
 import { useClosestStore } from './hooks/useClosestStore'
 import { useMapHint } from './hooks/useMapHint'
 import { toInput, type CoordinateInput } from './lib/coordinates'
@@ -13,7 +14,14 @@ function App() {
   const [focus, setFocus] = useState<LatLngLiteral | null>(null)
   const [input, setInput] = useState<CoordinateInput>({ lat: '', lng: '' })
   const hint = useMapHint()
-  const { state, lookup } = useClosestStore(hint.dismiss)
+  const api = useApiStatus()
+  const { dismiss: dismissHint } = hint
+  const { markReady } = api
+  const handleSuccess = useCallback(() => {
+    dismissHint()
+    markReady()
+  }, [dismissHint, markReady])
+  const { state, lookup } = useClosestStore(handleSuccess)
   const panelRef = useRef<HTMLElement>(null)
 
   const search = useCallback(
@@ -51,6 +59,7 @@ function App() {
         <StorePanel
           ref={panelRef}
           state={state}
+          apiStatus={api.status}
           selected={selected}
           input={input}
           onInputChange={setInput}

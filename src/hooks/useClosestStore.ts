@@ -48,6 +48,8 @@ function toMessage(err: unknown): string {
     switch (err.code) {
       case 'INVALID_COORDINATES':
         return err.message
+      case 'TIMEOUT':
+        return 'The server took too long to respond. Please try again.'
       case 'UNREACHABLE':
         return "Can't reach the API. It may be waking up, try again in a few seconds."
       case 'NO_STORE_NEARBY':

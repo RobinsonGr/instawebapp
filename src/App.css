@@ -106,6 +106,50 @@
   margin: 0;
 }
 
+/* ---------- API status ---------- */
+
+.api-status {
+  padding: var(--space-4) var(--space-5) 0;
+}
+
+/* Kept in the DOM (it's a live region) but takes no space when empty. */
+.api-status:empty {
+  padding: 0;
+}
+
+.api-status__chip {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius-md);
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.api-status__chip .spinner {
+  width: 12px;
+  height: 12px;
+  margin-top: 2px;
+}
+
+.api-status__chip--down {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.loading-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
 /* ---------- Form ---------- */
 
 .coord-form {
@@ -716,9 +760,15 @@
     box-shadow: var(--shadow-lg);
   }
 
-  /* Show the result first so it's visible without scrolling the sheet. */
+  /* Show the result first so it's visible without scrolling the sheet,
+     with the server status above even that. */
   .panel__section[aria-live] {
     order: -1;
+  }
+
+  .api-status {
+    order: -2;
+    padding: var(--space-3) var(--space-4) 0;
   }
 
   .panel__section + .panel__section {

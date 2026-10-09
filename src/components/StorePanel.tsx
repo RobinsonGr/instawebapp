@@ -2,9 +2,11 @@ import type { Ref } from 'react'
 import type { LatLngLiteral } from 'leaflet'
 import type { Store } from '../api/stores'
 import { isInCoverage } from '../config/coverage'
+import type { ApiStatus } from '../hooks/useApiStatus'
 import type { ClosestStoreState } from '../hooks/useClosestStore'
 import type { CoordinateInput } from '../lib/coordinates'
 import { distanceMeters, formatCoordinates, formatDistance } from '../lib/geo'
+import { ApiStatusChip } from './ApiStatusChip'
 import { CoordinateForm } from './CoordinateForm'
 import { LocateButton } from './LocateButton'
 import { PresetButtons } from './PresetButtons'
@@ -12,6 +14,7 @@ import { PresetButtons } from './PresetButtons'
 type StorePanelProps = {
   ref?: Ref<HTMLElement>
   state: ClosestStoreState
+  apiStatus: ApiStatus
   selected: LatLngLiteral | null
   input: CoordinateInput
   onInputChange: (input: CoordinateInput) => void
@@ -21,6 +24,7 @@ type StorePanelProps = {
 export function StorePanel({
   ref,
   state,
+  apiStatus,
   selected,
   input,
   onInputChange,
@@ -30,6 +34,7 @@ export function StorePanel({
 
   return (
     <aside ref={ref} className="panel" aria-label="Store search">
+      <ApiStatusChip status={apiStatus} />
       <section className="panel__section" aria-labelledby="search-title">
         <h2 id="search-title" className="panel__title">
           Search
@@ -59,15 +64,23 @@ export function StorePanel({
         <h2 id="result-title" className="panel__title">
           Closest store
         </h2>
-        <Result state={state} selected={selected} onSearch={onSearch} />
+        <Result
+          state={state}
+          waking={apiStatus === 'waking'}
+          selected={selected}
+          onSearch={onSearch}
+        />
       </section>
     </aside>
   )
 }
 
-type ResultProps = Pick<StorePanelProps, 'state' | 'selected' | 'onSearch'>
+type ResultProps = Pick<StorePanelProps, 'state' | 'selected' | 'onSearch'> & {
+  /** The server is cold-starting, so a search may take a while. */
+  waking: boolean
+}
 
-function Result({ state, selected, onSearch }: ResultProps) {
+function Result({ state, waking, selected, onSearch }: ResultProps) {
   // Shown before the API answers; a 404 then explains itself, and a found
   // store makes the warning moot.
   const outside =
@@ -83,12 +96,17 @@ function Result({ state, selected, onSearch }: ResultProps) {
           found.
         </p>
       )}
-      <ResultBody state={state} selected={selected} onSearch={onSearch} />
+      <ResultBody
+        state={state}
+        waking={waking}
+        selected={selected}
+        onSearch={onSearch}
+      />
     </>
   )
 }
 
-function ResultBody({ state, selected, onSearch }: ResultProps) {
+function ResultBody({ state, waking, selected, onSearch }: ResultProps) {
   switch (state.status) {
     case 'idle':
       return (
@@ -99,7 +117,14 @@ function ResultBody({ state, selected, onSearch }: ResultProps) {
     case 'loading':
       return (
         <div className="skeleton">
-          <span className="visually-hidden">Finding the closest store…</span>
+          {waking ? (
+            <p className="loading-note">
+              <span className="spinner" aria-hidden="true" />
+              Waiting for the server to wake up…
+            </p>
+          ) : (
+            <span className="visually-hidden">Finding the closest store…</span>
+          )}
           <span className="skeleton__line skeleton__line--title" />
           <span className="skeleton__line skeleton__line--pill" />
           <span className="skeleton__line" />

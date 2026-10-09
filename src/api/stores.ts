@@ -1,3 +1,11 @@
+import {
+  API_URL,
+  fetchWithTimeout,
+  sleep,
+  TimeoutError,
+  USE_MOCK,
+} from './client'
+
 export type Store = {
   storeId: string
   storeName: string
@@ -6,7 +14,11 @@ export type Store = {
 }
 
 export type StoreApiErrorCode =
-  'INVALID_COORDINATES' | 'NO_STORE_NEARBY' | 'UNREACHABLE' | 'UNKNOWN'
+  | 'INVALID_COORDINATES'
+  | 'NO_STORE_NEARBY'
+  | 'UNREACHABLE'
+  | 'TIMEOUT'
+  | 'UNKNOWN'
 
 export class StoreApiError extends Error {
   readonly code: StoreApiErrorCode
@@ -18,10 +30,10 @@ export class StoreApiError extends Error {
   }
 }
 
-// In dev, go through the Vite proxy (see vite.config.ts) to avoid CORS.
-const API_URL = import.meta.env.DEV ? '/api' : import.meta.env.VITE_API_URL
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const MOCK_DELAY_MS = 600
+// Generous: a free-tier API can take most of a minute to wake up.
+const REQUEST_TIMEOUT_MS = 60_000
+const RETRY_DELAY_MS = 1_500
 
 export function getClosestStore(
   lat: number,
@@ -33,7 +45,23 @@ export function getClosestStore(
     : fetchClosestStore(lat, lng, signal)
 }
 
+// One retry for network errors only. A timeout isn't retried: that would
+// double an already long wait.
 async function fetchClosestStore(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<Store> {
+  try {
+    return await fetchClosestStoreOnce(lat, lng, signal)
+  } catch (err) {
+    if (!(err instanceof StoreApiError) || err.code !== 'UNREACHABLE') throw err
+    await sleep(RETRY_DELAY_MS, signal)
+    return fetchClosestStoreOnce(lat, lng, signal)
+  }
+}
+
+async function fetchClosestStoreOnce(
   lat: number,
   lng: number,
   signal?: AbortSignal,
@@ -45,9 +73,15 @@ async function fetchClosestStore(
 
   let res: Response
   try {
-    res = await fetch(`${API_URL}/stores/closest?${params}`, { signal })
+    res = await fetchWithTimeout(`${API_URL}/stores/closest?${params}`, {
+      signal,
+      timeoutMs: REQUEST_TIMEOUT_MS,
+    })
   } catch (err) {
     if (signal?.aborted) throw err
+    if (err instanceof TimeoutError) {
+      throw new StoreApiError('TIMEOUT', err.message)
+    }
     throw new StoreApiError('UNREACHABLE', 'Network request failed.')
   }
 
